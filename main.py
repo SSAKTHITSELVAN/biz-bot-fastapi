@@ -1,8 +1,8 @@
 # app/main.py
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from app.services import process_business_requirement
-from app import gst_scraper
 
 app = FastAPI(
     title="Biz Chatbot API",
@@ -10,16 +10,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-app.include_router(router= gst_scraper.router, tags=['GSTIN'])
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class UserRequest(BaseModel):
     requirement: str
 
 @app.post("/generate-post/", tags=['Biz post'])
 def generate_business_post(request: UserRequest):
-    """
-    Accepts a user's natural language requirement and returns a structured business post.
-    """
     try:
         structured_data = process_business_requirement(request.requirement)
         return structured_data
@@ -29,3 +33,4 @@ def generate_business_post(request: UserRequest):
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Bizzap Chatbot API"}
+
